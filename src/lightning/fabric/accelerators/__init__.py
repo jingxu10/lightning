@@ -22,3 +22,13 @@ from lightning.fabric.utilities.registry import _register_classes
 
 ACCELERATOR_REGISTRY = _AcceleratorRegistry()
 _register_classes(ACCELERATOR_REGISTRY, "register_accelerators", sys.modules[__name__], Accelerator)
+
+from lightning.fabric.utilities.imports import _lightning_xpu_available
+
+_ACCELERATORS_BASE_MODULE = "lightning.fabric.accelerators"
+ACCELERATOR_REGISTRY = _AcceleratorRegistry()
+call_register_accelerators(ACCELERATOR_REGISTRY, _ACCELERATORS_BASE_MODULE)
+if _lightning_xpu_available() and "xpu" not in ACCELERATOR_REGISTRY:
+    from lightning_xpu.fabric import XPUAccelerator
+
+    XPUAccelerator.register_accelerators(ACCELERATOR_REGISTRY)
