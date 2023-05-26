@@ -28,7 +28,11 @@ from lightning.pytorch.profilers import (
     XLAProfiler,
 )
 from lightning.pytorch.utilities.exceptions import MisconfigurationException
-from lightning.pytorch.utilities.imports import _LIGHTNING_GRAPHCORE_AVAILABLE, _LIGHTNING_HABANA_AVAILABLE, _LIGHTNING_XPU_AVAILABLE
+from lightning.pytorch.utilities.imports import (
+    _LIGHTNING_GRAPHCORE_AVAILABLE,
+    _LIGHTNING_HABANA_AVAILABLE,
+    _LIGHTNING_XPU_AVAILABLE,
+)
 from lightning.pytorch.utilities.rank_zero import rank_zero_info, rank_zero_warn
 
 

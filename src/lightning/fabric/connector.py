@@ -23,7 +23,6 @@ from lightning.fabric.accelerators.accelerator import Accelerator
 from lightning.fabric.accelerators.cuda import CUDAAccelerator
 from lightning.fabric.accelerators.mps import MPSAccelerator
 from lightning.fabric.accelerators.xla import XLAAccelerator
-from lightning.fabric.utilities.imports import _LIGHTNING_XPU_AVAILABLE
 from lightning.fabric.plugins import (
     CheckpointIO,
     DeepSpeedPrecision,
@@ -64,7 +63,7 @@ from lightning.fabric.strategies.ddp import _DDP_FORK_ALIASES
 from lightning.fabric.strategies.fsdp import _FSDP_ALIASES, FSDPStrategy
 from lightning.fabric.utilities import rank_zero_info, rank_zero_warn
 from lightning.fabric.utilities.device_parser import _determine_root_gpu_device
-from lightning.fabric.utilities.imports import _IS_INTERACTIVE
+from lightning.fabric.utilities.imports import _IS_INTERACTIVE, _LIGHTNING_XPU_AVAILABLE
 
 _PLUGIN = Union[Precision, ClusterEnvironment, CheckpointIO]
 _PLUGIN_INPUT = Union[_PLUGIN, str]
@@ -323,6 +322,7 @@ class _Connector:
             return "cuda"
         if _LIGHTNING_XPU_AVAILABLE:
             from lightning_xpu.fabric import XPUAccelerator
+
             if XPUAccelerator.is_available():
                 return "xpu"
 
@@ -336,6 +336,7 @@ class _Connector:
             return "cuda"
         if _LIGHTNING_XPU_AVAILABLE:
             from lightning_xpu.fabric import XPUAccelerator
+
             if XPUAccelerator.is_available():
                 return "xpu"
         raise RuntimeError("No supported gpu backend found!")
@@ -399,6 +400,7 @@ class _Connector:
             supported_accelerators_str = ["cuda", "gpu", "mps"]
             if _LIGHTNING_XPU_AVAILABLE:
                 from lightning_xpu.fabric import XPUAccelerator
+
                 supported_accelerators.append(XPUAccelerator)
                 supported_accelerators_str.append("xpu")
             if isinstance(self._accelerator_flag, tuple(supported_accelerators)) or (

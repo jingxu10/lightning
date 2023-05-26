@@ -158,6 +158,7 @@ def _get_num_processes(accelerator: str, devices: str) -> int:
         raise ValueError("Launching processes for TPU through the CLI is not supported.")
     elif accelerator == "xpu":
         from lightning_xpu.fabric import XPUAccelerator
+
         parsed_devices = XPUAccelerator.parse_devices(devices)
     else:
         return CPUAccelerator.parse_devices(devices)

@@ -447,13 +447,12 @@ class _AcceleratorConnector:
             from lightning_habana import SingleHPUStrategy
 
             return SingleHPUStrategy(device=torch.device("hpu"))
-        if self._accelerator_flag == "xpu":
-            if not _LIGHTNING_XPU_AVAILABLE:
-                raise ImportError(
-                    "You have asked for XPU but you miss install related integration."
-                    " Please run `pip install lightning-xpu` or see for further instructions"
-                    " in https://github.com/Lightning-AI/lightning-XPU/."
-                )
+        if self._accelerator_flag == "xpu" and not _LIGHTNING_XPU_AVAILABLE:
+            raise ImportError(
+                "You have asked for XPU but you miss install related integration."
+                " Please run `pip install lightning-xpu` or see for further instructions"
+                " in https://github.com/Lightning-AI/lightning-XPU/."
+            )
         if self._accelerator_flag == "tpu" or isinstance(self._accelerator_flag, XLAAccelerator):
             if self._parallel_devices and len(self._parallel_devices) > 1:
                 return XLAStrategy.strategy_name
