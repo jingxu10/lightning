@@ -66,6 +66,7 @@ from lightning.pytorch.utilities.imports import (
     _LIGHTNING_COLOSSALAI_AVAILABLE,
     _LIGHTNING_GRAPHCORE_AVAILABLE,
     _LIGHTNING_HABANA_AVAILABLE,
+    _LIGHTNING_XPU_AVAILABLE,
 )
 from lightning.pytorch.utilities.rank_zero import rank_zero_info, rank_zero_warn
 
@@ -348,6 +349,11 @@ class _AcceleratorConnector:
 
             if HPUAccelerator.is_available():
                 return "hpu"
+        if _LIGHTNING_XPU_AVAILABLE:
+            from lightning_xpu import XPUAccelerator
+
+            if XPUAccelerator.is_available():
+                return "xpu"
         if MPSAccelerator.is_available():
             return "mps"
         if CUDAAccelerator.is_available():
@@ -360,6 +366,11 @@ class _AcceleratorConnector:
             return "mps"
         if CUDAAccelerator.is_available():
             return "cuda"
+        if _LIGHTNING_XPU_AVAILABLE:
+            from lightning_xpu.pytorch import XPUAccelerator
+
+            if XPUAccelerator.is_available():
+                return "xpu"
         raise MisconfigurationException("No supported gpu backend found!")
 
     def _set_parallel_devices_and_init_accelerator(self) -> None:
@@ -436,6 +447,13 @@ class _AcceleratorConnector:
             from lightning_habana import SingleHPUStrategy
 
             return SingleHPUStrategy(device=torch.device("hpu"))
+        if self._accelerator_flag == "xpu":
+            if not _LIGHTNING_XPU_AVAILABLE:
+                raise ImportError(
+                    "You have asked for XPU but you miss install related integration."
+                    " Please run `pip install lightning-xpu` or see for further instructions"
+                    " in https://github.com/Lightning-AI/lightning-XPU/."
+                )
         if self._accelerator_flag == "tpu" or isinstance(self._accelerator_flag, XLAAccelerator):
             if self._parallel_devices and len(self._parallel_devices) > 1:
                 return XLAStrategy.strategy_name
@@ -704,6 +722,13 @@ def _register_external_accelerators_and_strategies() -> None:
             HPUParallelStrategy.register_strategies(StrategyRegistry)
         if "hpu_single" not in StrategyRegistry:
             SingleHPUStrategy.register_strategies(StrategyRegistry)
+
+    if _LIGHTNING_XPU_AVAILABLE:
+        from lightning_xpu.pytorch import XPUAccelerator
+
+        # TODO: Prevent registering multiple times
+        if "xpu" not in AcceleratorRegistry:
+            XPUAccelerator.register_accelerators(AcceleratorRegistry)
 
     if _LIGHTNING_GRAPHCORE_AVAILABLE:
         from lightning_graphcore import IPUAccelerator, IPUStrategy

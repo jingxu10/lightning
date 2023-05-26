@@ -16,7 +16,11 @@ from lightning.fabric.accelerators.cuda import CUDAAccelerator, find_usable_cuda
 from lightning.fabric.accelerators.mps import MPSAccelerator  # noqa: F401
 from lightning.fabric.accelerators.registry import _AcceleratorRegistry, call_register_accelerators
 from lightning.fabric.accelerators.xla import XLAAccelerator  # noqa: F401
-
+from lightning.fabric.utilities.imports import _LIGHTNING_XPU_AVAILABLE
 _ACCELERATORS_BASE_MODULE = "lightning.fabric.accelerators"
 ACCELERATOR_REGISTRY = _AcceleratorRegistry()
 call_register_accelerators(ACCELERATOR_REGISTRY, _ACCELERATORS_BASE_MODULE)
+if _LIGHTNING_XPU_AVAILABLE:
+    if "xpu" not in ACCELERATOR_REGISTRY:
+        from lightning_xpu.fabric import XPUAccelerator
+        XPUAccelerator.register_accelerators(ACCELERATOR_REGISTRY)
