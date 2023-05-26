@@ -28,7 +28,7 @@ from lightning.pytorch.profilers import (
     XLAProfiler,
 )
 from lightning.pytorch.utilities.exceptions import MisconfigurationException
-from lightning.pytorch.utilities.imports import _LIGHTNING_GRAPHCORE_AVAILABLE, _LIGHTNING_HABANA_AVAILABLE
+from lightning.pytorch.utilities.imports import _LIGHTNING_GRAPHCORE_AVAILABLE, _LIGHTNING_HABANA_AVAILABLE, _LIGHTNING_XPU_AVAILABLE
 from lightning.pytorch.utilities.rank_zero import rank_zero_info, rank_zero_warn
 
 
@@ -178,11 +178,24 @@ def _log_device_info(trainer: "pl.Trainer") -> None:
         hpu_available = False
     rank_zero_info(f"HPU available: {hpu_available}, using: {num_hpus} HPUs")
 
+    if _LIGHTNING_XPU_AVAILABLE:
+        from lightning_xpu.pytorch import XPUAccelerator
+
+        num_xpus = trainer.num_devices if isinstance(trainer.accelerator, XPUAccelerator) else 0
+        xpu_available = XPUAccelerator.is_available()
+    else:
+        num_xpus = 0
+        xpu_available = False
+    rank_zero_info(f"XPU available: {xpu_available}, using: {num_xpus} XPUs")
+
     if (
         CUDAAccelerator.is_available()
         and not isinstance(trainer.accelerator, CUDAAccelerator)
         or MPSAccelerator.is_available()
         and not isinstance(trainer.accelerator, MPSAccelerator)
+        or _LIGHTNING_XPU_AVAILABLE
+        and XPUAccelerator.is_available()
+        and not isinstance(trainer.accelerator, XPUAccelerator)
     ):
         rank_zero_warn(
             "GPU available but not used. You can set it by doing `Trainer(accelerator='gpu')`.",

@@ -24,12 +24,15 @@ from lightning.fabric.accelerators import CPUAccelerator, CUDAAccelerator, MPSAc
 from lightning.fabric.plugins.precision.precision import _PRECISION_INPUT_STR, _PRECISION_INPUT_STR_ALIAS
 from lightning.fabric.strategies import STRATEGY_REGISTRY
 from lightning.fabric.utilities.device_parser import _parse_gpu_ids
+from lightning.fabric.utilities.imports import _LIGHTNING_XPU_AVAILABLE
 
 _log = logging.getLogger(__name__)
 
 _CLICK_AVAILABLE = RequirementCache("click")
 
-_SUPPORTED_ACCELERATORS = ("cpu", "gpu", "cuda", "mps", "tpu")
+_SUPPORTED_ACCELERATORS = ["cpu", "gpu", "cuda", "mps", "tpu"]
+if _LIGHTNING_XPU_AVAILABLE:
+    _SUPPORTED_ACCELERATORS.append("xpu")
 
 
 def _get_supported_strategies() -> List[str]:
@@ -146,13 +149,16 @@ def _set_env_variables(args: Namespace) -> None:
 def _get_num_processes(accelerator: str, devices: str) -> int:
     """Parse the `devices` argument to determine how many processes need to be launched on the current machine."""
     if accelerator == "gpu":
-        parsed_devices = _parse_gpu_ids(devices, include_cuda=True, include_mps=True)
+        parsed_devices = _parse_gpu_ids(devices, include_cuda=True, include_mps=True, include_xpu=True)
     elif accelerator == "cuda":
         parsed_devices = CUDAAccelerator.parse_devices(devices)
     elif accelerator == "mps":
         parsed_devices = MPSAccelerator.parse_devices(devices)
     elif accelerator == "tpu":
         raise ValueError("Launching processes for TPU through the CLI is not supported.")
+    elif accelerator == "xpu":
+        from lightning_xpu.fabric import XPUAccelerator
+        parsed_devices = XPUAccelerator.parse_devices(devices)
     else:
         return CPUAccelerator.parse_devices(devices)
     return len(parsed_devices) if parsed_devices is not None else 0
