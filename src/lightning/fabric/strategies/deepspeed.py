@@ -33,11 +33,11 @@ from lightning.fabric.strategies.ddp import DDPStrategy
 from lightning.fabric.strategies.registry import _StrategyRegistry
 from lightning.fabric.strategies.strategy import _Sharded
 from lightning.fabric.utilities.distributed import log
+from lightning.fabric.utilities.imports import _LIGHTNING_XPU_AVAILABLE
 from lightning.fabric.utilities.rank_zero import rank_zero_info, rank_zero_warn
 from lightning.fabric.utilities.seed import reset_seed
 from lightning.fabric.utilities.types import _PATH
 
-from lightning.fabric.utilities.imports import _LIGHTNING_XPU_AVAILABLE
 if _LIGHTNING_XPU_AVAILABLE:
     from lightning_xpu.fabric import XPUAccelerator
 
@@ -483,10 +483,9 @@ class DeepSpeedStrategy(DDPStrategy, _Sharded):
         optimzer_state_requested = bool(len([item for item in state.values() if isinstance(item, Optimizer)]))
 
         torch.cuda.empty_cache()
-        try:
+        with suppress(AttributeError):
             torch.xpu.empty_cache()
-        except AttributeError:
-            pass
+
         _, client_state = engine.load_checkpoint(
             path,
             tag="checkpoint",
@@ -584,7 +583,7 @@ class DeepSpeedStrategy(DDPStrategy, _Sharded):
     def _setup_distributed(self) -> None:
         if not isinstance(self.accelerator, CUDAAccelerator) and not isinstance(self.accelerator, XPUAccelerator):
             raise RuntimeError(
-                f"The DeepSpeed strategy is only supported on CUDA/Intel(R) GPUs but"
+                "The DeepSpeed strategy is only supported on CUDA/Intel(R) GPUs but"
                 " `{self.accelerator.__class__.__name__}` is used."
             )
         reset_seed()
