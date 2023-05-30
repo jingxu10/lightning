@@ -21,7 +21,7 @@ class XPUAccelerator:
         raise NotImplementedError(
             "The `XPUAccelerator` class has been moved to an external package."
             " Install the extension package as `pip install lightning-xpu`"
-            " and import with `from lightning_xpu import XPUAccelerator`."
+            " and import with `from lightning_xpu.pytorch import XPUAccelerator`."
             " Please see: https://github.com/Lightning-AI/lightning-XPU for more details."
         )
 

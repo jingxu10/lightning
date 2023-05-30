@@ -37,6 +37,10 @@ from lightning.fabric.utilities.rank_zero import rank_zero_info, rank_zero_warn
 from lightning.fabric.utilities.seed import reset_seed
 from lightning.fabric.utilities.types import _PATH
 
+from lightning.fabric.utilities.imports import _LIGHTNING_XPU_AVAILABLE
+if _LIGHTNING_XPU_AVAILABLE:
+    from lightning_xpu.fabric import XPUAccelerator
+
 _DEEPSPEED_AVAILABLE = RequirementCache("deepspeed")
 if TYPE_CHECKING and _DEEPSPEED_AVAILABLE:
     import deepspeed
@@ -215,7 +219,8 @@ class DeepSpeedStrategy(DDPStrategy, _Sharded):
             contiguous_memory_optimization: Copies partitioned activations so that they are contiguous in memory.
                 Not supported by all models.
 
-            synchronize_checkpoint_boundary: Insert :func:`torch.cuda.synchronize` at each checkpoint boundary.
+            synchronize_checkpoint_boundary: Insert :func:`torch.cuda.synchronize` or :func:`torch.xpu.synchronize`
+                at each checkpoint boundary.
 
             load_full_weights: True when loading a single checkpoint file containing the model state dict
                 when using ZeRO Stage 3. This differs from the DeepSpeed checkpoint which contains shards
@@ -478,6 +483,10 @@ class DeepSpeedStrategy(DDPStrategy, _Sharded):
         optimzer_state_requested = bool(len([item for item in state.values() if isinstance(item, Optimizer)]))
 
         torch.cuda.empty_cache()
+        try:
+            torch.xpu.empty_cache()
+        except AttributeError:
+            pass
         _, client_state = engine.load_checkpoint(
             path,
             tag="checkpoint",
@@ -573,10 +582,10 @@ class DeepSpeedStrategy(DDPStrategy, _Sharded):
         return deepspeed_engine, deepspeed_optimizer
 
     def _setup_distributed(self) -> None:
-        if not isinstance(self.accelerator, CUDAAccelerator):
+        if not isinstance(self.accelerator, CUDAAccelerator) and not isinstance(self.accelerator, XPUAccelerator):
             raise RuntimeError(
-                f"The DeepSpeed strategy is only supported on CUDA GPUs but `{self.accelerator.__class__.__name__}`"
-                " is used."
+                f"The DeepSpeed strategy is only supported on CUDA/Intel(R) GPUs but"
+                " `{self.accelerator.__class__.__name__}` is used."
             )
         reset_seed()
         self._set_world_ranks()
