@@ -350,7 +350,7 @@ class _AcceleratorConnector:
             if HPUAccelerator.is_available():
                 return "hpu"
         if _LIGHTNING_XPU_AVAILABLE:
-            from lightning_xpu import XPUAccelerator
+            from lightning_xpu.pytorch import XPUAccelerator
 
             if XPUAccelerator.is_available():
                 return "xpu"
