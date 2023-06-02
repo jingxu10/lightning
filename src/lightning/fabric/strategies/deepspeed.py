@@ -477,8 +477,8 @@ class DeepSpeedStrategy(DDPStrategy, _Sharded):
         optimzer_state_requested = bool(len([item for item in state.values() if isinstance(item, Optimizer)]))
 
         torch.cuda.empty_cache()
-        with suppress(AttributeError):
-            torch.xpu.empty_cache()
+        if _LIGHTNING_XPU_AVAILABLE:
+            XPUAccelerator.teardown()
 
         _, client_state = engine.load_checkpoint(
             path,
