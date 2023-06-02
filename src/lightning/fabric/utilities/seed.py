@@ -19,6 +19,7 @@ from lightning.fabric.utilities.imports import _LIGHTNING_XPU_AVAILABLE
 if _LIGHTNING_XPU_AVAILABLE:
     from lightning_xpu.fabric import XPUAccelerator
 
+
 def seed_everything(seed: Optional[int] = None, workers: bool = False) -> int:
     """Function that sets seed for pseudo-random number generators in: pytorch, numpy, python.random In addition,
     sets the following environment variables:
@@ -118,9 +119,8 @@ def _collect_rng_states(include_cuda: bool = True, include_xpu: bool = True) -> 
     }
     if include_cuda:
         states["torch.cuda"] = torch.cuda.get_rng_state_all()
-    if include_xpu:
-        if XPUAccelerator.is_available():
-            states["torch.xpu"] = XPUAccelerator._collect_rng_states()
+    if include_xpu and XPUAccelerator.is_available():
+        states["torch.xpu"] = XPUAccelerator._collect_rng_states()
     return states
 
 
@@ -131,9 +131,8 @@ def _set_rng_states(rng_state_dict: Dict[str, Any]) -> None:
     # torch.cuda rng_state is only included since v1.8.
     if "torch.cuda" in rng_state_dict:
         torch.cuda.set_rng_state_all(rng_state_dict["torch.cuda"])
-    if "torch.xpu" in rng_state_dict:
-        if XPUAccelerator.is_available():
-            XPUAccelerator._set_rng_states(rng_state_dict)
+    if "torch.xpu" in rng_state_dict and XPUAccelerator.is_available():
+        XPUAccelerator._set_rng_states(rng_state_dict)
     np.random.set_state(rng_state_dict["numpy"])
     version, state, gauss = rng_state_dict["python"]
     python_set_rng_state((version, tuple(state), gauss))
