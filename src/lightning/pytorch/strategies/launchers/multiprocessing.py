@@ -27,7 +27,7 @@ from lightning_utilities.core.apply_func import apply_to_collection
 from torch import Tensor
 
 import lightning.pytorch as pl
-from lightning.fabric.strategies.launchers.multiprocessing import _check_bad_cuda_fork
+from lightning.fabric.strategies.launchers.multiprocessing import _check_bad_cuda_fork, _check_bad_xpu_fork
 from lightning.fabric.utilities import move_data_to_device
 from lightning.fabric.utilities.seed import _collect_rng_states, _set_rng_states
 from lightning.fabric.utilities.types import _PATH
@@ -35,7 +35,11 @@ from lightning.pytorch.strategies.launchers.launcher import _Launcher
 from lightning.pytorch.trainer.connectors.signal_connector import _SIGNUM
 from lightning.pytorch.trainer.states import TrainerFn, TrainerState
 from lightning.pytorch.utilities.rank_zero import rank_zero_debug
+from lightning.fabric.utilities.imports import _LIGHTNING_XPU_AVAILABLE
 
+if _LIGHTNING_XPU_AVAILABLE:
+    from lightning_xpu.fabric import XPUAccelerator
+    
 log = logging.getLogger(__name__)
 
 
@@ -97,6 +101,8 @@ class _MultiProcessingLauncher(_Launcher):
         self._check_torchdistx_support()
         if self._start_method in ("fork", "forkserver"):
             _check_bad_cuda_fork()
+            if XPUAccelerator.is_available():
+                _check_bad_xpu_fork()
 
         # The default cluster environment in Lightning chooses a random free port number
         # This needs to be done in the main process here before starting processes to ensure each rank will connect
