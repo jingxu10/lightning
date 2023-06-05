@@ -199,7 +199,7 @@ def _check_bad_xpu_fork() -> None:
     The error message replaces PyTorch's 'Cannot re-initialize XPU in forked subprocess' with helpful advice for
     Lightning users.
     """
-    if not XPUAccelerator.is_initialized():
+    if not XPUAccelerator.is_xpu_initialized():
         return
 
     message = (
