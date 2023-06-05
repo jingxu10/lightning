@@ -24,10 +24,13 @@ from lightning.fabric.strategies.launchers.launcher import _Launcher
 from lightning.fabric.utilities.apply_func import move_data_to_device
 from lightning.fabric.utilities.imports import _IS_INTERACTIVE
 from lightning.fabric.utilities.seed import _collect_rng_states, _set_rng_states
+from lightning.fabric.utilities.imports import _LIGHTNING_XPU_AVAILABLE
 
 if TYPE_CHECKING:
     from lightning.fabric.strategies import ParallelStrategy
-
+    
+if _LIGHTNING_XPU_AVAILABLE:
+    from lightning_xpu.fabric import XPUAccelerator
 
 class _MultiProcessingLauncher(_Launcher):
     r"""Launches processes that run a given function in parallel, and joins them all at the end.
@@ -85,6 +88,8 @@ class _MultiProcessingLauncher(_Launcher):
         """
         if self._start_method in ("fork", "forkserver"):
             _check_bad_cuda_fork()
+            if XPUAccelerator.is_available():
+                _check_bad_xpu_fork()
 
         # The default cluster environment in Lightning chooses a random free port number
         # This needs to be done in the main process here before starting processes to ensure each rank will connect
@@ -187,3 +192,21 @@ def _check_bad_cuda_fork() -> None:
     if _IS_INTERACTIVE:
         message += " You will have to restart the Python kernel."
     raise RuntimeError(message)
+
+def _check_bad_xpu_fork() -> None:
+    """Checks whether it is safe to fork and initialize XPU in the new processes, and raises an exception if not.
+
+    The error message replaces PyTorch's 'Cannot re-initialize XPU in forked subprocess' with helpful advice for
+    Lightning users.
+    """
+    if not XPUAccelerator.is_xpu_initialized():
+        return
+
+    message = (
+        "Lightning can't create new processes if XPU is already initialized. Did you manually call"
+        " `torch.xpu.*` functions, have moved the model to the device, or allocated memory on the GPU any"
+        " other way? Please remove any such calls, or change the selected strategy."
+    )
+    if _IS_INTERACTIVE:
+        message += " You will have to restart the Python kernel."
+    raise RuntimeError(message)    
