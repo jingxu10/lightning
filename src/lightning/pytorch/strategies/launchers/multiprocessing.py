@@ -34,12 +34,12 @@ from lightning.fabric.utilities.types import _PATH
 from lightning.pytorch.strategies.launchers.launcher import _Launcher
 from lightning.pytorch.trainer.connectors.signal_connector import _SIGNUM
 from lightning.pytorch.trainer.states import TrainerFn, TrainerState
-from lightning.pytorch.utilities.rank_zero import rank_zero_debug
 from lightning.pytorch.utilities.imports import _LIGHTNING_XPU_AVAILABLE
+from lightning.pytorch.utilities.rank_zero import rank_zero_debug
 
 if _LIGHTNING_XPU_AVAILABLE:
     from lightning_xpu.pytorch import XPUAccelerator
-    
+
 log = logging.getLogger(__name__)
 
 

@@ -22,15 +22,15 @@ import torch.multiprocessing as mp
 
 from lightning.fabric.strategies.launchers.launcher import _Launcher
 from lightning.fabric.utilities.apply_func import move_data_to_device
-from lightning.fabric.utilities.imports import _IS_INTERACTIVE
+from lightning.fabric.utilities.imports import _IS_INTERACTIVE, _LIGHTNING_XPU_AVAILABLE
 from lightning.fabric.utilities.seed import _collect_rng_states, _set_rng_states
-from lightning.fabric.utilities.imports import _LIGHTNING_XPU_AVAILABLE
 
 if TYPE_CHECKING:
     from lightning.fabric.strategies import ParallelStrategy
-    
+
 if _LIGHTNING_XPU_AVAILABLE:
     from lightning_xpu.fabric import XPUAccelerator
+
 
 class _MultiProcessingLauncher(_Launcher):
     r"""Launches processes that run a given function in parallel, and joins them all at the end.
@@ -193,6 +193,7 @@ def _check_bad_cuda_fork() -> None:
         message += " You will have to restart the Python kernel."
     raise RuntimeError(message)
 
+
 def _check_bad_xpu_fork() -> None:
     """Checks whether it is safe to fork and initialize XPU in the new processes, and raises an exception if not.
 
@@ -209,4 +210,4 @@ def _check_bad_xpu_fork() -> None:
     )
     if _IS_INTERACTIVE:
         message += " You will have to restart the Python kernel."
-    raise RuntimeError(message)    
+    raise RuntimeError(message)
