@@ -484,8 +484,9 @@ class DeepSpeedStrategy(DDPStrategy, _Sharded):
 
         torch.cuda.empty_cache()
         with suppress(AttributeError):
-            torch.xpu.empty_cache()
-
+            if _LIGHTNING_XPU_AVAILABLE:
+                XPUAccelerator.teardown()
+                
         _, client_state = engine.load_checkpoint(
             path,
             tag="checkpoint",
