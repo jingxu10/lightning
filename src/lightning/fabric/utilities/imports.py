@@ -17,7 +17,7 @@ import operator
 import platform
 import sys
 
-from lightning_utilities.core.imports import compare_version, RequirementCache
+from lightning_utilities.core.imports import RequirementCache, compare_version
 
 _IS_WINDOWS = platform.system() == "Windows"
 

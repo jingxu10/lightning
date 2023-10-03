@@ -182,6 +182,7 @@ def _get_all_available_gpus(
     xpu_gpus = []
     if _lightning_xpu_available():
         from lightning_xpu.fabric import _get_all_visible_xpu_devices
+
         xpu_gpus += _get_all_visible_xpu_devices() if include_xpu else []
     return cuda_gpus + mps_gpus + xpu_gpus
 
