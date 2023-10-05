@@ -16,9 +16,6 @@ max_seed_value = np.iinfo(np.uint32).max
 min_seed_value = np.iinfo(np.uint32).min
 from lightning.fabric.utilities.imports import _lightning_xpu_available
 
-if _lightning_xpu_available():
-    from lightning_xpu.fabric import XPUAccelerator
-
 
 def seed_everything(seed: Optional[int] = None, workers: bool = False) -> int:
     r"""Function that sets seed for pseudo-random number generators in: pytorch, numpy, python.random In addition,
@@ -61,8 +58,8 @@ def seed_everything(seed: Optional[int] = None, workers: bool = False) -> int:
     np.random.seed(seed)
     torch.manual_seed(seed)
     torch.cuda.manual_seed_all(seed)
-    if _lightning_xpu_available() and XPUAccelerator.is_available():
-        XPUAccelerator.manual_seed_all(seed)
+    if _lightning_xpu_available() and torch.xpu.is_available():
+        torch.xpu.manual_seed_all(seed)
 
     os.environ["PL_SEED_WORKERS"] = f"{int(workers)}"
 
@@ -122,8 +119,8 @@ def _collect_rng_states(include_cuda: bool = True, include_xpu: bool = True) -> 
     }
     if include_cuda:
         states["torch.cuda"] = torch.cuda.get_rng_state_all()
-    if include_xpu and _lightning_xpu_available() and XPUAccelerator.is_available():
-        states["torch.xpu"] = XPUAccelerator._collect_rng_states()
+    if include_xpu and _lightning_xpu_available() and torch.xpu.is_available():
+        states["torch.xpu"] = torch.xpu.get_rng_state_all()
     return states
 
 
@@ -134,8 +131,8 @@ def _set_rng_states(rng_state_dict: Dict[str, Any]) -> None:
     # torch.cuda rng_state is only included since v1.8.
     if "torch.cuda" in rng_state_dict:
         torch.cuda.set_rng_state_all(rng_state_dict["torch.cuda"])
-    if "torch.xpu" in rng_state_dict and _lightning_xpu_available() and XPUAccelerator.is_available():
-        XPUAccelerator._set_rng_states(rng_state_dict)
+    if "torch.xpu" in rng_state_dict and _lightning_xpu_available() and torch.xpu.is_available():
+        torch.xpu.set_rng_states_all(rng_state_dict["torch.xpu"])
     np.random.set_state(rng_state_dict["numpy"])
     version, state, gauss = rng_state_dict["python"]
     python_set_rng_state((version, tuple(state), gauss))
