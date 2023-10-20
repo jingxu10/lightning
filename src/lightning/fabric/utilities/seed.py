@@ -132,7 +132,7 @@ def _set_rng_states(rng_state_dict: Dict[str, Any]) -> None:
     if "torch.cuda" in rng_state_dict:
         torch.cuda.set_rng_state_all(rng_state_dict["torch.cuda"])
     if "torch.xpu" in rng_state_dict and _lightning_xpu_available() and torch.xpu.is_available():
-        torch.xpu.set_rng_states_all(rng_state_dict["torch.xpu"])
+        torch.xpu.set_rng_state_all(rng_state_dict["torch.xpu"])
     np.random.set_state(rng_state_dict["numpy"])
     version, state, gauss = rng_state_dict["python"]
     python_set_rng_state((version, tuple(state), gauss))

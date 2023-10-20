@@ -484,8 +484,16 @@ class _AcceleratorConnector:
         if self._num_nodes_flag > 1:
             return "ddp"
         if len(self._parallel_devices) <= 1:
-            if isinstance(self._accelerator_flag, (CUDAAccelerator, MPSAccelerator)) or (
-                isinstance(self._accelerator_flag, str) and self._accelerator_flag in ("cuda", "gpu", "mps")
+            accelerator_flags_obj = (CUDAAccelerator, MPSAccelerator)
+            accelerator_flags_str = ("cuda", "gpu", "mps")
+            if _lightning_xpu_available():
+                from lightning_xpu.pytorch import XPUAccelerator
+
+                if XPUAccelerator.is_available():
+                    accelerator_flags_obj += (XPUAccelerator,)
+                    accelerator_flags_str += ("xpu",)
+            if isinstance(self._accelerator_flag, accelerator_flags_obj) or (
+                isinstance(self._accelerator_flag, str) and self._accelerator_flag in accelerator_flags_str
             ):
                 device = _determine_root_gpu_device(self._parallel_devices)
             else:
