@@ -35,7 +35,7 @@ if TYPE_CHECKING:
     from lightning.fabric.strategies import ParallelStrategy
 
 if _lightning_xpu_available():
-    from lightning_xpu.fabric import XPUAccelerator
+    from lightning_xpu.fabric import XPUAccelerator, is_xpu_initialized
 
 
 class _MultiProcessingLauncher(_Launcher):
@@ -258,7 +258,7 @@ def _check_bad_xpu_fork() -> None:
     Lightning users.
 
     """
-    if not XPUAccelerator.is_xpu_initialized():
+    if not is_xpu_initialized():
         return
 
     message = (
