@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import contextlib
 import math
 from collections import OrderedDict
 from typing import Any, Dict, Optional, Union
@@ -233,9 +234,16 @@ class _TrainingEpochLoop(loops._Loop):
             profile_name = "fp32"
             if self.bf16_training:
                 profile_name = "bf16"
-                dtype=torch.bfloat16
+                dtype = torch.bfloat16
             with self.trainer.profiler.profile("run_training_batch"):
-                with torch.autograd.profiler_legacy.profile(enabled=self.xpu_profiling, use_xpu=True, record_shapes=False) as prof:
+                with (
+                    contextlib.nullcontext(None) if not self.xpu_profiling else
+                    torch.profiler.profile(
+                        activities=[torch.profiler.ProfilerActivity.CPU,
+                                    torch.profiler.ProfilerActivity.XPU],
+                        record_shapes=False,
+                    )
+                ) as prof:
                     with torch.xpu.amp.autocast(enabled=self.bf16_training, dtype=dtype):
                         if self.trainer.lightning_module.automatic_optimization:
                             # in automatic optimization, there can only be one optimizer
@@ -246,7 +254,8 @@ class _TrainingEpochLoop(loops._Loop):
 
                 if self.batch_progress.total.processed == self.profile_iter and self.xpu_profiling:
                     torch.save(prof.key_averages().table(sort_by="self_xpu_time_total"), './profiling.' + profile_name + '.train.pt')
-                    torch.save(prof.table(sort_by="id", row_limit=-1), './profiling.' + profile_name + '.train.detailed.pt')
+                    # Cannot sort by id when using kineto
+                    # torch.save(prof.table(sort_by="id", row_limit=-1), './profiling.' + profile_name + '.train.detailed.pt')
                     prof.export_chrome_trace('./profiling.' + profile_name + '_trace.json')
 
         self.batch_progress.increment_processed()
